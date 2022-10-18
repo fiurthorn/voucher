@@ -22,7 +22,7 @@ type D24Result struct {
 	Code        int    `json:"code"`
 
 	Data struct {
-		Code     json.Number `json:"code"`
+		Code     string      `json:"code"`
 		CouponId json.Number `json:"coupon_id"`
 		Note     string      `json:"note"`
 	} `json:"data"`
