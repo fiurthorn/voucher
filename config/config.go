@@ -81,6 +81,33 @@ func homeConfigFile() (string, error) {
 	return configFile, nil
 }
 
+func marshalConfigFile(configFile string, config any) (err error) {
+	configDir := filepath.Dir(configFile)
+	if _, err = os.Stat(configDir); errors.Is(err, os.ErrNotExist) {
+		log.Println("create ", configDir)
+		err = os.MkdirAll(configDir, 0755)
+		if err != nil {
+			return
+		}
+	}
+
+	log.Println("marshal config")
+	content, err := yaml.Marshal(config)
+	if err != nil {
+		log.Printf("error marshal file: %v", err)
+		return
+	}
+
+	log.Println("store config to", configFile)
+	err = os.WriteFile(configFile, content, 0644)
+	if err != nil {
+		log.Printf("error read file: %v", err)
+		return
+	}
+
+	return
+}
+
 func unmarshalConfigFile(configFile string, config any) (err error) {
 	log.Println("try", configFile)
 	if _, err := os.Stat(configFile); errors.Is(err, os.ErrNotExist) {
@@ -110,12 +137,24 @@ func configFile() (configFile string, err error) {
 	}
 
 	if _, err = os.Stat(configFile); errors.Is(err, os.ErrNotExist) {
+		log.Println("not found", configFile)
 		configFile, err = homeConfigFile()
+		log.Println("try", configFile)
 		if err != nil {
 			return
 		}
 	}
 
+	return
+}
+
+func StoreConfig() (file string, err error) {
+	file, err = configFile()
+	if err != nil {
+		return "", err
+	}
+
+	err = marshalConfigFile(file, &Config)
 	return
 }
 

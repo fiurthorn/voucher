@@ -20,14 +20,12 @@ func main() {
 		return
 	}
 
-	log.Printf("%+v", config.Config)
+	app := app.New()
+	window := app.NewWindow("Create Voucher | digistore24")
+	u := ui.Create(window)
 
-	myApp := app.New()
-	myWindow := myApp.NewWindow("Create Voucher | digistore24")
-
-	myWindow.SetContent(ui.Widget())
-
-	// myWindow.Resize(fyne.Size{Width: 800, Height: 600})
-	myWindow.Show()
-	myApp.Run()
+	window.SetContent(u.Widget())
+	window.Show()
+	u.Focus()
+	app.Run()
 }

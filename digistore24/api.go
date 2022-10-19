@@ -2,16 +2,14 @@ package digistore24
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
-
-	"github.com/fiurthorn/voucher/config"
 )
 
 const (
-	baseUrl = "https://www.digistore24.com/api/call/createVoucher/"
+	baseUrl = "https://www.digistore24.com/api/call/%s/"
 )
 
 type D24Result struct {
@@ -36,33 +34,29 @@ func header(apikey string) map[string]string {
 	}
 }
 
-func query(voucher string, products []string) url.Values {
-	return url.Values{
-		"arg1[code]":             []string{voucher},
-		"arg1[product_ids]":      []string{strings.Join(products, ",")},
-		"arg1[first_rate]":       []string{"100"},
-		"arg1[is_count_limited]": []string{"true"},
-		"arg1[count_left]":       []string{"1"},
-		"arg1[upgrade_policy]":   []string{"not_valid"},
-	}
-}
-
-func buildUrl(voucher string, products []string) (*url.URL, error) {
-	u, err := url.Parse(baseUrl)
+func buildUrl(function string, values url.Values) (*url.URL, error) {
+	u, err := url.Parse(fmt.Sprintf(baseUrl, function))
 	if err != nil {
 		return nil, err
 	}
-	u.RawQuery = query(voucher, products).Encode()
+	u.RawQuery = values.Encode()
 
 	return u, nil
 }
 
-func buildRequest(apiKey, voucher string, products []string) (req *http.Request, err error) {
-	u, err := buildUrl(voucher, products)
-	if err != nil {
-		return
+func queryValues(v url.Values, id int, values map[string]string) url.Values {
+	for key, val := range values {
+		v.Set(fmt.Sprintf("arg%d[%s]", id, key), val)
 	}
+	return v
+}
 
+func queryValue(v url.Values, id int, val string) url.Values {
+	v.Set(fmt.Sprintf("arg%d", id), val)
+	return v
+}
+
+func createGetRequest(u *url.URL, apiKey string) (req *http.Request, err error) {
 	req, err = http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return
@@ -75,14 +69,7 @@ func buildRequest(apiKey, voucher string, products []string) (req *http.Request,
 	return
 }
 
-func call(apiKey, voucher string, products []string) (status int, result D24Result, err error) {
-	result = D24Result{}
-
-	req, err := buildRequest(apiKey, voucher, products)
-	if err != nil {
-		return
-	}
-
+func callRequest(req *http.Request) (status int, result D24Result, err error) {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return
@@ -104,22 +91,4 @@ func call(apiKey, voucher string, products []string) (status int, result D24Resu
 	}
 
 	return
-}
-
-type CallResult struct {
-	Voucher string
-	Status  int
-	Result  D24Result
-	Err     error
-}
-
-func Call(vouchers string, drain chan<- CallResult) {
-	voucherIds := strings.Split(strings.ReplaceAll(vouchers, "\r\n", "\n"), "\n")
-
-	for _, v := range voucherIds {
-		s, r, e := call(config.Config.ApiKey, v, config.Config.Products)
-		drain <- CallResult{v, s, r, e}
-	}
-
-	close(drain)
 }

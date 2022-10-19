@@ -1,6 +1,6 @@
 # Voucher
 
-Drag & drop voucher creator for Digistore24.
+Copy'n'Paste voucher creator for Digistore24.
 Apikey and Product IDS that are stored in a Yaml file.
 
 The configuration should be next to the executable file
@@ -8,3 +8,8 @@ The configuration should be next to the executable file
 
 Add the voucher IDS line by line to the editor
 And press the `Create` button.
+
+## shortcuts
+
+- `CTRL+E`: make config values editable
+- `CTRL+S`: Create and save config values
